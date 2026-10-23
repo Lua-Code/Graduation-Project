@@ -31,4 +31,4 @@ jobs:
         run: python -m mypy src
 
       - name: Check import boundaries
-        run: python -m lint_imports
+        run: lint-imports
