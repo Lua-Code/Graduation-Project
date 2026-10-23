@@ -1,0 +1,46 @@
+
+{
+  "schemaVersion": "1.0",
+  "runId": "run-001",
+  "tick": 12,
+  "simulationTimeSeconds": 12.0,
+  "status": "running",
+  "units": [
+    {
+      "unitId": "ambulance-01",
+      "unitType": "ambulance",
+      "status": "assigned",
+      "x": 8.0,
+      "y": 11.0,
+      "assignedIncidentId": "incident-01"
+    }
+  ],
+  "incidents": [
+    {
+      "incidentId": "incident-01",
+      "x": 10.0,
+      "y": 12.0,
+      "status": "assigned",
+      "priority": 2
+    }
+  ],
+  "victims": [
+    {
+      "victimId": "victim-01",
+      "incidentId": "incident-01",
+      "status": "waiting_for_rescue",
+      "health": 75.0
+    }
+  ],
+  "recentEvents": [
+    {
+      "eventId": "event-001",
+      "tick": 12,
+      "type": "unit_assigned",
+      "entityId": "ambulance-01",
+      "data": {
+        "incidentId": "incident-01"
+      }
+    }
+  ]
+}
