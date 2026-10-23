@@ -1,4 +1,4 @@
-name: Tests
+name: Tests and Code Quality
 
 on:
   push:
@@ -24,11 +24,11 @@ jobs:
       - name: Run tests
         run: python -m pytest -q
 
-      - name: Check formatting and lint
-        run: ruff check .
+      - name: Check lint
+        run: python -m ruff check .
 
       - name: Check types
         run: python -m mypy src
 
       - name: Check import boundaries
-        run: lint-imports
+        run: python -m lint_imports
