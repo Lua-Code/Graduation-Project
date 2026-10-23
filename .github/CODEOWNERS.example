@@ -1,0 +1,7 @@
+# Copy to CODEOWNERS after the team agrees on module ownership.
+# Use GitHub usernames, for example:
+# /src/drsim/simulation/ @github-username
+# /src/drsim/ai/ @github-username
+# /src/drsim/evaluation/ @github-username
+# /src/drsim/backend/ @github-username
+# /frontend/ @github-username

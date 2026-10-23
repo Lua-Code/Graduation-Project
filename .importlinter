@@ -1,0 +1,12 @@
+[importlinter]
+root_package = drsim
+
+[importlinter:contract:simulation-boundary]
+name = Simulation cannot depend on higher-level layers
+type = forbidden
+source_modules =
+    drsim.simulation
+forbidden_modules =
+    drsim.ai
+    drsim.backend
+    drsim.evaluation
