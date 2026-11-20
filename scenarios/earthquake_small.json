@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "scenarioId": "earthquake-small-01",
+  "seed": 42,
+  "mapId": "synthetic-city-01",
+  "tickDurationSeconds": 10,
+  "maxTicks": 3600,
+  "earthquake": {
+    "magnitude": 6.5,
+    "epicenterX": 1000,
+    "epicenterY": 1000,
+    "initialDamageScale": 1.0
+  }
+}
