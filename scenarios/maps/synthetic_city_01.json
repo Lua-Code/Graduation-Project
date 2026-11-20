@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "mapId": "synthetic-city-01",
+  "widthMeters": 2000,
+  "heightMeters": 2000,
+  "nodes": [
+    {"nodeId": "n1", "x": 200,  "y": 200},
+    {"nodeId": "n2", "x": 1000, "y": 200},
+    {"nodeId": "n3", "x": 1800, "y": 200},
+    {"nodeId": "n4", "x": 200,  "y": 1000},
+    {"nodeId": "n5", "x": 1000, "y": 1000},
+    {"nodeId": "n6", "x": 1800, "y": 1000}
+  ],
+  "edges": [
+    {"edgeId": "e1", "sourceNodeId": "n1", "targetNodeId": "n2", "lengthMeters": 800, "speedMetersPerSecond": 13.9, "state": "open"},
+    {"edgeId": "e2", "sourceNodeId": "n2", "targetNodeId": "n3", "lengthMeters": 800, "speedMetersPerSecond": 13.9, "state": "open"},
+    {"edgeId": "e3", "sourceNodeId": "n4", "targetNodeId": "n5", "lengthMeters": 800, "speedMetersPerSecond": 13.9, "state": "open"},
+    {"edgeId": "e4", "sourceNodeId": "n5", "targetNodeId": "n6", "lengthMeters": 800, "speedMetersPerSecond": 13.9, "state": "open"},
+    {"edgeId": "e5", "sourceNodeId": "n1", "targetNodeId": "n4", "lengthMeters": 800, "speedMetersPerSecond": 11.1, "state": "open"},
+    {"edgeId": "e6", "sourceNodeId": "n2", "targetNodeId": "n5", "lengthMeters": 800, "speedMetersPerSecond": 11.1, "state": "open"},
+    {"edgeId": "e7", "sourceNodeId": "n3", "targetNodeId": "n6", "lengthMeters": 800, "speedMetersPerSecond": 11.1, "state": "open"}
+  ],
+  "facilities": [
+    {"facilityId": "h1", "facilityType": "hospital", "nodeId": "n6", "capacity": 40},
+    {"facilityId": "fs1", "facilityType": "fire_station", "nodeId": "n1", "capacity": 6}
+  ],
+  "zones": [
+    {"zoneId": "z1", "name": "North-west district", "polygon": [{"x": 0, "y": 0}, {"x": 1000, "y": 0}, {"x": 1000, "y": 1000}, {"x": 0, "y": 1000}]}
+  ]
+}
