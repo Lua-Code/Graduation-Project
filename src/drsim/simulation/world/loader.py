@@ -32,14 +32,21 @@ def load_scenario(path: str | Path) -> ScenarioConfig:
         raise ScenarioLoadError(f"Invalid scenario {path}: {exc}") from exc
 
 
-def load_scenario_with_map(scenario_path: str | Path, maps_dir: str | Path) -> tuple[ScenarioConfig, MapDefinition]:
+def load_scenario_with_map(
+    scenario_path: str | Path, maps_dir: str | Path
+) -> tuple[ScenarioConfig, MapDefinition]:
     scenario = load_scenario(scenario_path)
     map_def = load_map(Path(maps_dir) / f"{scenario.mapId.replace('-', '_')}.json")
 
     if map_def.mapId != scenario.mapId:
-        raise ScenarioLoadError(f"Scenario expects map {scenario.mapId}, file contains {map_def.mapId}")
+        raise ScenarioLoadError(
+            f"Scenario expects map {scenario.mapId}, file contains {map_def.mapId}"
+        )
 
-    epicenter_ok = (0 <= scenario.earthquake.epicenterX <= map_def.widthMeters and 0 <= scenario.earthquake.epicenterY <= map_def.heightMeters)
+    epicenter_ok = (
+        0 <= scenario.earthquake.epicenterX <= map_def.widthMeters
+        and 0 <= scenario.earthquake.epicenterY <= map_def.heightMeters
+    )
     if not epicenter_ok:
         raise ScenarioLoadError("Earthquake epicenter is outside the map bounds")
 
