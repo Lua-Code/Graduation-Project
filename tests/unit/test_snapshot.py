@@ -1,18 +1,5 @@
-from pathlib import Path
-
 from drsim.simulation.snapshot import build_snapshot
-from drsim.simulation.state import initialize_state
-from drsim.simulation.world.loader import load_scenario_with_map
-
-ROOT = Path(__file__).resolve().parents[2]
-
-
-def _state():
-    scenario, map_def = load_scenario_with_map(
-        ROOT / "scenarios" / "earthquake_small.json",
-        ROOT / "scenarios" / "maps",
-    )
-    return initialize_state("run-1", scenario, map_def)
+from tests.unit.test_state_init import _state
 
 
 def test_snapshot_counts_and_order():
