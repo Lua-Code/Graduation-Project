@@ -160,6 +160,16 @@ def _scenario(**overrides):
         "seed": 1,
         "mapId": "m1",
         "earthquake": {"magnitude": 6.0, "epicenterX": 10, "epicenterY": 10},
+        "units": [{"unitId": "u1", "unitType": "ambulance", "nodeId": "n1"}],
+        "incidents": [
+            {
+                "incidentId": "i1",
+                "incidentType": "building_collapse",
+                "nodeId": "n4",
+                "priority": 3,
+                "victimCount": 2,
+            }
+        ],
     }
     data.update(overrides)
     return data

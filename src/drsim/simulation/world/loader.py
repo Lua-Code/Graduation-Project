@@ -50,4 +50,12 @@ def load_scenario_with_map(
     if not epicenter_ok:
         raise ScenarioLoadError("Earthquake epicenter is outside the map bounds")
 
+    node_ids = {n.nodeId for n in map_def.nodes}
+    for u in scenario.units:
+        if u.nodeId not in node_ids:
+            raise ScenarioLoadError(f"Unit {u.unitId} references unknown node {u.nodeId}")
+    for i in scenario.incidents:
+        if i.nodeId not in node_ids:
+            raise ScenarioLoadError(f"Incident {i.incidentId} references unknown node {i.nodeId}")
+
     return scenario, map_def
