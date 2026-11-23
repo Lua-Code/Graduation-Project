@@ -1,0 +1,64 @@
+import json
+import time
+from pathlib import Path
+
+from drsim.simulation.engine import tick
+from drsim.simulation.snapshot import build_snapshot
+from drsim.simulation.state import initialize_state
+from drsim.simulation.world.loader import load_scenario_with_map
+
+ROOT = Path(__file__).resolve().parents[2]
+BASE = json.loads((ROOT / "scenarios" / "earthquake_small.json").read_text(encoding="utf-8"))
+
+
+def _state():
+    scenario, map_def = load_scenario_with_map(
+        ROOT / "scenarios" / "earthquake_small.json",
+        ROOT / "scenarios" / "maps",
+    )
+    return initialize_state("run-1", scenario, map_def)
+
+
+def test_each_tick_advances_exactly_10_seconds():
+    s = _state()
+    for n in range(1, 4):
+        tick.step(s)
+        assert s.tick == n
+        assert build_snapshot(s).simulationTimeSeconds == n * 10
+
+
+def test_phases_run_in_documented_order(monkeypatch):
+    calls = []
+    names = [f.__name__ for f in tick.PHASES]
+    fakes = tuple((lambda st, n=n: calls.append(n)) for n in names)
+    monkeypatch.setattr(tick, "PHASES", fakes)
+    tick.step(_state())
+    assert (
+        calls
+        == names
+        == [
+            "apply_commands",
+            "update_world",
+            "update_units",
+            "update_victims",
+            "check_end_condition",
+        ]
+    )
+
+
+def test_same_input_same_progression():
+    a, b = _state(), _state()
+    for _ in range(50):
+        tick.step(a)
+        tick.step(b)
+        assert build_snapshot(a) == build_snapshot(b)
+        assert a.rng.getstate() == b.rng.getstate()
+
+
+def test_wall_clock_does_not_matter(monkeypatch):
+    def boom(*_a, **_k):
+        raise AssertionError("wall clock used")
+
+    for fn in ("time", "monotonic", "perf_counter", "sleep"):
+        monkeypatch.setattr(time, fn, boom)
+    tick.step(_state())

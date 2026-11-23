@@ -21,6 +21,8 @@ Key fields:
 - `tickDurationSeconds`: simulated duration of one tick
 - `maxTicks`: maximum number of ticks
 - `earthquake`: earthquake-specific configuration
+- `units`: the units available
+- `incidents`: the incidents to occur in the scenario
 
 The current MVP uses a synthetic earthquake scenario.
 

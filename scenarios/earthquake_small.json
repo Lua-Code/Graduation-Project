@@ -10,5 +10,34 @@
     "epicenterX": 1000,
     "epicenterY": 1000,
     "initialDamageScale": 1.0
-  }
+  },
+  "units": [
+    { "unitId": "unit-001", "unitType": "ambulance", "nodeId": "n1" },
+    { "unitId": "unit-002", "unitType": "ambulance", "nodeId": "n2" },
+    { "unitId": "unit-003", "unitType": "fire", "nodeId": "n1" },
+    { "unitId": "unit-004", "unitType": "rescue", "nodeId": "n2" }
+  ],
+  "incidents": [
+    {
+      "incidentId": "inc-001",
+      "incidentType": "building_collapse",
+      "nodeId": "n4",
+      "priority": 5,
+      "victimCount": 4
+    },
+    {
+      "incidentId": "inc-002",
+      "incidentType": "building_collapse",
+      "nodeId": "n5",
+      "priority": 3,
+      "victimCount": 3
+    },
+    {
+      "incidentId": "inc-003",
+      "incidentType": "building_collapse",
+      "nodeId": "n6",
+      "priority": 2,
+      "victimCount": 2
+    }
+  ]
 }

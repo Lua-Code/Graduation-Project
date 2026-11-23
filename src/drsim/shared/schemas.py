@@ -35,6 +35,20 @@ class ContractModel(BaseModel):
 # ---------- scenario ----------
 
 
+class UnitSpec(ContractModel):
+    unitId: NonEmptyId
+    unitType: UnitType
+    nodeId: NonEmptyId
+
+
+class IncidentSpec(ContractModel):
+    incidentId: NonEmptyId
+    incidentType: IncidentType
+    nodeId: NonEmptyId
+    priority: int = Field(ge=1, le=5)
+    victimCount: PositiveInt
+
+
 class EarthquakeConfig(ContractModel):
     magnitude: float = Field(ge=1.0, le=10.0)
     epicenterX: NonNegativeFloat
@@ -50,6 +64,8 @@ class ScenarioConfig(ContractModel):
     tickDurationSeconds: PositiveInt = 10
     maxTicks: PositiveInt = 3600
     earthquake: EarthquakeConfig
+    units: tuple[UnitSpec, ...] = Field(min_length=1)
+    incidents: tuple[IncidentSpec, ...] = Field(min_length=1)
 
 
 # ---------- command payloads ----------
