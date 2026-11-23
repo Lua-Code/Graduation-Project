@@ -21,7 +21,7 @@ class SimulationState:
     incidents: dict[str, IncidentState] = field(default_factory=dict)
     victims: dict[str, VictimState] = field(default_factory=dict)
     facilities: dict[str, MapFacility] = field(default_factory=dict)
-    edge_states: dict[tuple[str, EdgeState], object] = field(default_factory=dict)
+    edge_states: dict[str, EdgeState] = field(default_factory=dict)
     command_queue: list[SimulationCommand] = field(default_factory=list)
     seen_command_ids: set[str] = field(default_factory=set)
 
