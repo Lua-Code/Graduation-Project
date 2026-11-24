@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "scenarioId": "earthquake-city02-offcentre",
+  "seed": 101,
+  "mapId": "synthetic-city-02",
+  "tickDurationSeconds": 10,
+  "maxTicks": 3600,
+  "earthquake": {"magnitude": 7.0, "epicenterX": 500, "epicenterY": 2500, "initialDamageScale": 1.0},
+  "units": [
+    {"unitId": "unit-001", "unitType": "ambulance", "nodeId": "n11"},
+    {"unitId": "unit-002", "unitType": "ambulance", "nodeId": "n11"},
+    {"unitId": "unit-003", "unitType": "ambulance", "nodeId": "n44"},
+    {"unitId": "unit-004", "unitType": "ambulance", "nodeId": "n44"},
+    {"unitId": "unit-005", "unitType": "fire", "nodeId": "n00"},
+    {"unitId": "unit-006", "unitType": "fire", "nodeId": "n55"},
+    {"unitId": "unit-007", "unitType": "fire", "nodeId": "n00"},
+    {"unitId": "unit-008", "unitType": "rescue", "nodeId": "n05"},
+    {"unitId": "unit-009", "unitType": "rescue", "nodeId": "n05"},
+    {"unitId": "unit-010", "unitType": "rescue", "nodeId": "n55"}
+  ],
+  "incidents": [
+    {"incidentId": "inc-001", "incidentType": "building_collapse", "nodeId": "n22", "priority": 5, "victimCount": 4},
+    {"incidentId": "inc-002", "incidentType": "building_collapse", "nodeId": "n23", "priority": 4, "victimCount": 3},
+    {"incidentId": "inc-003", "incidentType": "building_collapse", "nodeId": "n32", "priority": 5, "victimCount": 2},
+    {"incidentId": "inc-004", "incidentType": "building_collapse", "nodeId": "n33", "priority": 3, "victimCount": 2},
+    {"incidentId": "inc-005", "incidentType": "building_collapse", "nodeId": "n13", "priority": 2, "victimCount": 1},
+    {"incidentId": "inc-006", "incidentType": "building_collapse", "nodeId": "n41", "priority": 3, "victimCount": 3},
+    {"incidentId": "inc-007", "incidentType": "building_collapse", "nodeId": "n25", "priority": 1, "victimCount": 1},
+    {"incidentId": "inc-008", "incidentType": "building_collapse", "nodeId": "n50", "priority": 4, "victimCount": 2}
+  ]
+}
