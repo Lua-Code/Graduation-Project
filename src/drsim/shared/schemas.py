@@ -56,6 +56,10 @@ class EarthquakeConfig(ContractModel):
     initialDamageScale: float = Field(default=1.0, ge=0.0, le=1.0)
 
 
+# PROVISIONAL
+DEFAULT_DEGRADED_TRAVEL_MULTIPLIER = 2.0
+
+
 class ScenarioConfig(ContractModel):
     schemaVersion: Literal["1.0"] = "1.0"
     scenarioId: NonEmptyId
@@ -63,6 +67,9 @@ class ScenarioConfig(ContractModel):
     mapId: NonEmptyId
     tickDurationSeconds: PositiveInt = 10
     maxTicks: PositiveInt = 3600
+    degradedTravelMultiplier: float = Field(
+        default=DEFAULT_DEGRADED_TRAVEL_MULTIPLIER, gt=1.0, allow_inf_nan=False
+    )
     earthquake: EarthquakeConfig
     units: tuple[UnitSpec, ...] = Field(min_length=1)
     incidents: tuple[IncidentSpec, ...] = Field(min_length=1)

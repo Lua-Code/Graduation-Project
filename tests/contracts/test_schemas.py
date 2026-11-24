@@ -178,6 +178,13 @@ def _scenario(**overrides):
 def test_scenario_defaults_and_roundtrip():
     s = ScenarioConfig(**_scenario())
     assert s.tickDurationSeconds == 10 and s.maxTicks == 3600
+    assert s.degradedTravelMultiplier == 2.0
+    assert roundtrip(s) == s
+
+
+def test_scenario_custom_degraded_multiplier_roundtrip():
+    s = ScenarioConfig(**_scenario(degradedTravelMultiplier=3.5))
+    assert s.degradedTravelMultiplier == 3.5
     assert roundtrip(s) == s
 
 
@@ -189,6 +196,9 @@ def test_scenario_defaults_and_roundtrip():
         {"seed": -1},
         {"scenarioId": ""},
         {"unknownField": 1},
+        {"degradedTravelMultiplier": 1},
+        {"degradedTravelMultiplier": 0.5},
+        {"degradedTravelMultiplier": float("inf")},
         {"earthquake": {"magnitude": 11.0, "epicenterX": 0, "epicenterY": 0}},
         {"earthquake": {"magnitude": 6.0, "epicenterX": -1, "epicenterY": 0}},
         {
