@@ -1,12 +1,12 @@
+import math
 from itertools import permutations
 from pathlib import Path
 
 import pytest
 
 from drsim.shared.enums import EdgeState
-from drsim.shared.schemas import MapDefinition, MapEdge
+from drsim.shared.schemas import DEFAULT_DEGRADED_TRAVEL_MULTIPLIER, MapDefinition, MapEdge
 from drsim.simulation.world.graph import (
-    DEGRADED_TRAVEL_MULTIPLIER,
     RoadGraph,
     UnknownNodeError,
     edge_travel_ticks,
@@ -58,7 +58,7 @@ def _with(**states: EdgeState) -> dict[str, EdgeState]:
         (100, 10, 1),  # exactly 10 s -> 1 tick
         (200, 10, 2),  # exactly 20 s -> 2 ticks
         (101, 10, 2),  # just above a multiple -> rounds up
-        (99, 10, 1),  # just below a multiple -> rounds up
+        (99, 10, 1),  # 9.9 s, under one tick -> 1
         (5, 10, 1),  # shorter than one tick -> minimum 1
         (230, 10, 3),  # 23 s -> 3 ticks (example from D14)
         (800, 13.9, 6),  # fixture e1: 57.6 s
@@ -75,14 +75,22 @@ def test_blocked_edge_has_no_travel_time():
 
 
 def test_degraded_edge_is_slower():
-    # 100 m at 10 m/s = 10 s; degraded multiplies time before rounding.
-    expected = DEGRADED_TRAVEL_MULTIPLIER * 1
-    assert edge_travel_ticks(_edge(100, 10), EdgeState.DEGRADED, TICK) == expected
-    assert edge_travel_ticks(_edge(800, 13.9), EdgeState.DEGRADED, TICK) == 12
+    # Degraded multiplies time before rounding.
+    m = DEFAULT_DEGRADED_TRAVEL_MULTIPLIER
+    assert edge_travel_ticks(_edge(100, 10), EdgeState.DEGRADED, TICK) == math.ceil(10 * m / TICK)
+    assert edge_travel_ticks(_edge(800, 13.9), EdgeState.DEGRADED, TICK) == math.ceil(
+        800 / 13.9 * m / TICK
+    )
+
+
+def test_degraded_multiplier_is_configurable():
+    # 100 m at 10 m/s = 10 s; x3 = 30 s = 3 ticks.
+    edge = _edge(100, 10)
+    assert edge_travel_ticks(edge, EdgeState.DEGRADED, TICK, degraded_multiplier=3) == 3
 
 
 def test_non_positive_tick_rejected():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="tick_seconds must be positive"):
         edge_travel_ticks(_edge(100, 10), EdgeState.OPEN, 0)
 
 
@@ -206,6 +214,20 @@ def test_parallel_edges_pick_fastest_then_smallest_id():
     tied = RoadGraph.from_map(_tiny_map([_tiny_edge("e2"), _tiny_edge("e1")]))
     route = shortest_route(tied, {}, "a", "b", TICK)
     assert route is not None and route.edge_ids == ("e1",)
+
+
+# ---------- configured degraded multiplier reaches the queries ----------
+
+
+def test_degraded_multiplier_is_forwarded_by_route_queries():
+    graph = RoadGraph.from_map(_tiny_map([_tiny_edge("e1")]))
+    states = {"e1": EdgeState.DEGRADED}  # 10 s base; x3 = 30 s = 3 ticks
+
+    route = shortest_route(graph, states, "a", "b", TICK, degraded_multiplier=3)
+    assert route is not None and route.total_ticks == 3
+
+    matrix = travel_ticks_matrix(graph, states, ["a"], ["b"], TICK, degraded_multiplier=3)
+    assert matrix[("a", "b")] == 3
 
 
 # ---------- determinism ----------

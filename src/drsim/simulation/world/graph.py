@@ -11,8 +11,8 @@ Rules implemented here (see Module Contracts §5.3, D13, D14):
 * Travel time is an integer number of ticks: ``ceil(seconds / tickDurationSeconds)``,
   with a minimum of 1 tick for any traversable edge.
 * A BLOCKED edge is never part of a route.
-* A DEGRADED edge takes ``DEGRADED_TRAVEL_MULTIPLIER`` (2) times as long
-  (docs/adr/0002-degraded-road-travel-multiplier.md).
+* A DEGRADED edge takes ``degraded_multiplier`` times as long (configured per scenario
+  via ``ScenarioConfig.degradedTravelMultiplier``).
 * Ties are broken deterministically: fewest total ticks first, then the
   lexicographically smallest node-ID sequence, then the smallest edge-ID sequence.
 
@@ -26,10 +26,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 
 from drsim.shared.enums import EdgeState
-from drsim.shared.schemas import MapDefinition, MapEdge
-
-# A degraded road takes twice as long. See docs/adr/0002-degraded-road-travel-multiplier.md.
-DEGRADED_TRAVEL_MULTIPLIER = 2
+from drsim.shared.schemas import DEFAULT_DEGRADED_TRAVEL_MULTIPLIER, MapDefinition, MapEdge
 
 # Guards against float noise turning an exact multiple (e.g. 20.000000000004 s) into an
 # extra tick. Travel times are derived from metres and m/s, so 1e-9 s is far below
@@ -93,7 +90,13 @@ class RoadGraph:
         )
 
 
-def edge_travel_ticks(edge: MapEdge, state: EdgeState, tick_seconds: int) -> int | None:
+def edge_travel_ticks(
+    edge: MapEdge,
+    state: EdgeState,
+    tick_seconds: int,
+    *,
+    degraded_multiplier: float = DEFAULT_DEGRADED_TRAVEL_MULTIPLIER,
+) -> int | None:
     """Integer ticks needed to traverse ``edge`` in ``state``; ``None`` if blocked."""
     if tick_seconds <= 0:
         raise ValueError("tick_seconds must be positive")
@@ -102,7 +105,7 @@ def edge_travel_ticks(edge: MapEdge, state: EdgeState, tick_seconds: int) -> int
 
     seconds = edge.lengthMeters / edge.speedMetersPerSecond
     if state is EdgeState.DEGRADED:
-        seconds *= DEGRADED_TRAVEL_MULTIPLIER
+        seconds *= degraded_multiplier
 
     ticks = math.ceil(seconds / tick_seconds - _FLOAT_TOLERANCE_SECONDS / tick_seconds)
     return max(1, ticks)
@@ -124,6 +127,8 @@ def _shortest_routes(
     origin: str,
     tick_seconds: int,
     target: str | None = None,
+    *,
+    degraded_multiplier: float = DEFAULT_DEGRADED_TRAVEL_MULTIPLIER,
 ) -> dict[str, Route]:
     """Dijkstra from ``origin`` with a total, deterministic ordering on candidate paths.
 
@@ -150,7 +155,12 @@ def _shortest_routes(
         for step in graph.adjacency[node_id]:
             if step.neighbor_id in settled:
                 continue
-            cost = edge_travel_ticks(step.edge, _edge_state(step.edge, edge_states), tick_seconds)
+            cost = edge_travel_ticks(
+                step.edge,
+                _edge_state(step.edge, edge_states),
+                tick_seconds,
+                degraded_multiplier=degraded_multiplier,
+            )
             if cost is None:
                 continue
             candidate = (ticks + cost, nodes + (step.neighbor_id,), edges + (step.edge.edgeId,))
@@ -168,12 +178,22 @@ def shortest_route(
     origin: str,
     destination: str,
     tick_seconds: int,
+    *,
+    degraded_multiplier: float = DEFAULT_DEGRADED_TRAVEL_MULTIPLIER,
 ) -> Route | None:
-    """Fastest passable route from ``origin`` to ``destination``, or ``None`` if unreachable."""
+    """Fastest passable route, or ``None`` if the destination is unreachable.
+
+    ``None`` means infeasible; the command layer maps it to ``ROUTE_INFEASIBLE``.
+    """
     _require_node(graph, destination)
-    return _shortest_routes(graph, edge_states, origin, tick_seconds, target=destination).get(
-        destination
-    )
+    return _shortest_routes(
+        graph,
+        edge_states,
+        origin,
+        tick_seconds,
+        target=destination,
+        degraded_multiplier=degraded_multiplier,
+    ).get(destination)
 
 
 def is_reachable(
@@ -182,9 +202,19 @@ def is_reachable(
     origin: str,
     destination: str,
     tick_seconds: int,
+    *,
+    degraded_multiplier: float = DEFAULT_DEGRADED_TRAVEL_MULTIPLIER,
 ) -> bool:
     """True if a passable route exists. Backs the dispatch ``ROUTE_INFEASIBLE`` check."""
-    return shortest_route(graph, edge_states, origin, destination, tick_seconds) is not None
+    route = shortest_route(
+        graph,
+        edge_states,
+        origin,
+        destination,
+        tick_seconds,
+        degraded_multiplier=degraded_multiplier,
+    )
+    return route is not None
 
 
 def travel_ticks_matrix(
@@ -193,6 +223,8 @@ def travel_ticks_matrix(
     origins: Iterable[str],
     destinations: Iterable[str],
     tick_seconds: int,
+    *,
+    degraded_multiplier: float = DEFAULT_DEGRADED_TRAVEL_MULTIPLIER,
 ) -> dict[tuple[str, str], int | None]:
     """Travel ticks for every (origin, destination) pair; ``None`` where unreachable.
 
@@ -205,7 +237,13 @@ def travel_ticks_matrix(
 
     matrix: dict[tuple[str, str], int | None] = {}
     for origin in sorted(set(origins)):
-        routes = _shortest_routes(graph, edge_states, origin, tick_seconds)
+        routes = _shortest_routes(
+            graph,
+            edge_states,
+            origin,
+            tick_seconds,
+            degraded_multiplier=degraded_multiplier,
+        )
         for destination in destination_ids:
             route = routes.get(destination)
             matrix[(origin, destination)] = None if route is None else route.total_ticks
