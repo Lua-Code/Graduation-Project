@@ -1,11 +1,11 @@
 import random
 from dataclasses import dataclass, field
 
-from drsim.shared.enums import EdgeState, RunStatus, VictimHealth
+from drsim.shared.enums import EdgeState, RunStatus
 from drsim.shared.schemas import MapDefinition, MapFacility, ScenarioConfig, SimulationCommand
-from drsim.simulation.entities.incidents import IncidentState
+from drsim.simulation.entities.incident_models import DEFAULT_RULES, Incident, Victim
+from drsim.simulation.entities.incident_rules import initial_health, severity_from_priority
 from drsim.simulation.entities.units import UnitState
-from drsim.simulation.entities.victims import VictimState
 
 
 @dataclass
@@ -18,8 +18,8 @@ class SimulationState:
     tick: int = 0
     status: RunStatus = RunStatus.CREATED
     units: dict[str, UnitState] = field(default_factory=dict)
-    incidents: dict[str, IncidentState] = field(default_factory=dict)
-    victims: dict[str, VictimState] = field(default_factory=dict)
+    incidents: dict[str, Incident] = field(default_factory=dict)
+    victims: dict[str, Victim] = field(default_factory=dict)
     facilities: dict[str, MapFacility] = field(default_factory=dict)
     edge_states: dict[str, EdgeState] = field(default_factory=dict)
     command_queue: list[SimulationCommand] = field(default_factory=list)
@@ -45,21 +45,26 @@ def initialize_state(
     for u in scenario.units:
         state.units[u.unitId] = UnitState(id=u.unitId, type=u.unitType, node_id=u.nodeId)
 
-    health_pool = [health for health in VictimHealth if health is not VictimHealth.DEAD]
-
     for spec in sorted(scenario.incidents, key=lambda i: i.incidentId):
-        inc = IncidentState(
-            id=spec.incidentId,
-            type=spec.incidentType,
-            node_id=spec.nodeId,
-            priority=spec.priority,
-        )
+        severity = severity_from_priority(spec.priority)
+        victim_ids: list[str] = []
+
         for n in range(1, spec.victimCount + 1):
             vid = f"{spec.incidentId}-v{n:03d}"
-            state.victims[vid] = VictimState(
-                id=vid, incident_id=spec.incidentId, health=rng.choice(health_pool)
+            state.victims[vid] = Victim(
+                victim_id=vid,
+                incident_id=spec.incidentId,
+                severity=severity,
+                health=initial_health(severity, DEFAULT_RULES),
             )
-            inc.victim_ids.append(vid)
-        state.incidents[spec.incidentId] = inc
+            victim_ids.append(vid)
+
+        state.incidents[spec.incidentId] = Incident(
+            incident_id=spec.incidentId,
+            incident_type=spec.incidentType,
+            node_id=spec.nodeId,
+            created_tick=0,
+            victim_ids=tuple(victim_ids),
+        )
 
     return state
