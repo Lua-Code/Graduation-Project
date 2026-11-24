@@ -21,15 +21,22 @@ def _state():
 
 def test_counts():
     s = _state()
-    assert (len(s.units), len(s.incidents), len(s.victims)) == (4, 3, 9)
+    assert (len(s.units), len(s.incidents), len(s.victims)) == (4, 3, 3)
     assert s.tick == 0 and s.status == RunStatus.CREATED
 
 
-def test_same_seed_same_victims():
+def test_init_is_deterministic():
     a, b = _state(), _state()
-    assert {k: v.health for k, v in a.victims.items()} == {
-        k: v.health for k, v in b.victims.items()
-    }
+    assert a.victims == b.victims
+    assert a.incidents == b.incidents
+
+
+def test_phase1_one_victim_per_incident_with_stable_ids():
+    a, b = _state(), _state()
+    assert sorted(a.victims) == sorted(b.victims)
+    for inc in a.incidents.values():
+        assert inc.victim_ids == (f"{inc.incident_id}-v001",)
+        assert a.victims[inc.victim_ids[0]].incident_id == inc.incident_id
 
 
 def _load(tmp_path, mutate):
@@ -38,6 +45,20 @@ def _load(tmp_path, mutate):
     p = tmp_path / "s.json"
     p.write_text(json.dumps(data), encoding="utf-8")
     return load_scenario_with_map(p, ROOT / "scenarios" / "maps")
+
+
+def test_incident_can_reference_multiple_victims(tmp_path):
+    scenario, map_def = _load(
+        tmp_path, lambda d: d["incidents"][0].update(victimCount=3)
+    )
+    s = initialize_state("run-1", scenario, map_def)
+    assert s.incidents["inc-001"].victim_ids == (
+        "inc-001-v001",
+        "inc-001-v002",
+        "inc-001-v003",
+    )
+    assert len(s.victims) == 5
+    assert all(s.victims[v].incident_id == "inc-001" for v in s.incidents["inc-001"].victim_ids)
 
 
 @pytest.mark.parametrize(

@@ -23,21 +23,21 @@
       "incidentType": "building_collapse",
       "nodeId": "n4",
       "priority": 5,
-      "victimCount": 4
+      "victimCount": 1
     },
     {
       "incidentId": "inc-002",
       "incidentType": "building_collapse",
       "nodeId": "n5",
       "priority": 3,
-      "victimCount": 3
+      "victimCount": 1
     },
     {
       "incidentId": "inc-003",
       "incidentType": "building_collapse",
       "nodeId": "n6",
       "priority": 2,
-      "victimCount": 2
+      "victimCount": 1
     }
   ]
 }

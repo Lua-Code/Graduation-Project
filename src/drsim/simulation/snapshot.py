@@ -1,9 +1,6 @@
-from drsim.shared.schemas import (
-    IncidentSummary,
-    SimulationSnapshot,
-    UnitSummary,
-    VictimSummary,
-)
+from drsim.shared.schemas import SimulationSnapshot, UnitSummary
+from drsim.simulation.entities.incident_models import DEFAULT_RULES
+from drsim.simulation.entities.incident_rules import to_incident_summary, to_victim_summary
 from drsim.simulation.state import SimulationState
 
 
@@ -27,24 +24,16 @@ def build_snapshot(state: SimulationState) -> SimulationSnapshot:
             for u in sorted(state.units.values(), key=lambda u: u.id)
         ),
         incidents=tuple(
-            IncidentSummary(
-                incidentId=i.id,
-                incidentType=i.type,
-                status=i.status,
-                x=pos[i.node_id][0],
-                y=pos[i.node_id][1],
-                priority=i.priority,
+            to_incident_summary(
+                inc,
+                [state.victims[v] for v in inc.victim_ids],
+                *pos[inc.node_id],
+                any(u.assigned_incident_id == inc.incident_id for u in state.units.values()),
+                DEFAULT_RULES,
             )
-            for i in sorted(state.incidents.values(), key=lambda i: i.id)
+            for inc in (state.incidents[k] for k in sorted(state.incidents))
         ),
         victims=tuple(
-            VictimSummary(
-                victimId=v.id,
-                incidentId=v.incident_id,
-                status=v.status,
-                healthState=v.health,
-                health=v.health_points,
-            )
-            for v in sorted(state.victims.values(), key=lambda v: v.id)
+            to_victim_summary(state.victims[k], DEFAULT_RULES) for k in sorted(state.victims)
         ),
     )
