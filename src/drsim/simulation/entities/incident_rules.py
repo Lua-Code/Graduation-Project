@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from drsim.shared.enums import IncidentStatus, VictimHealth, VictimStatus
 from drsim.shared.schemas import IncidentSummary, VictimSummary
 from drsim.simulation.entities.incident_models import (
@@ -14,6 +16,13 @@ _URGENCY_BUMP = {
     VictimHealth.INJURED: 1,
     VictimHealth.CRITICAL: 2,
 }
+
+
+# Modification #1: helper function to convert priority(int) to severity(Severity)
+def severity_from_priority(priority: int) -> Severity:
+    if priority >= 5:
+        return Severity.CRITICAL
+    return Severity.SERIOUS if priority >= 3 else Severity.MINOR
 
 
 def initial_health(severity: Severity, rules: IncidentRules) -> float:
@@ -45,14 +54,18 @@ def priority_sort_key(priority: int, created_tick: int, incident_id: str) -> tup
     return (-priority, created_tick, incident_id)
 
 
-def derive_incident_status(victim: Victim, has_active_assignment: bool) -> IncidentStatus:
-    """Incident status is never stored; it is derived from the victim and assignments."""
-    if victim.status == VictimStatus.AT_HOSPITAL:
+# Modification #2: Adapted to use Sequence of victims instead of a victim
+def derive_incident_status(
+    victims: Sequence[Victim], has_active_assignment: bool
+) -> IncidentStatus:
+    if not victims:
+        raise ValueError("Incident must have at least one victim")
+    if all(v.status in TERMINAL_STATUSES for v in victims):
+        if any(v.status == VictimStatus.DEAD for v in victims):
+            return IncidentStatus.FAILED
         return IncidentStatus.RESOLVED
-    if victim.status == VictimStatus.DEAD:
-        return IncidentStatus.FAILED
-    if has_active_assignment or victim.rescue_progress_ticks > 0 or (
-        victim.status == VictimStatus.IN_TRANSIT
+    if has_active_assignment or any(
+        v.rescue_progress_ticks > 0 or v.status == VictimStatus.IN_TRANSIT for v in victims
     ):
         return IncidentStatus.IN_PROGRESS
     return IncidentStatus.OPEN
@@ -68,17 +81,25 @@ def to_victim_summary(victim: Victim, rules: IncidentRules) -> VictimSummary:
     )
 
 
+# Modificaiton 3: Uses sequence of victims and the incident rules to return an incident priority
+def compute_incident_priority(victims: Sequence[Victim], rules: IncidentRules) -> int:
+    return max(compute_priority(v, rules) for v in victims)
+
+
+# Modifcaiton 4: again just adapted to use Sequence of victims
 def to_incident_summary(
     incident: Incident,
-    victim: Victim,
+    victims: Sequence[Victim],
+    x: float,
+    y: float,
     has_active_assignment: bool,
     rules: IncidentRules,
 ) -> IncidentSummary:
     return IncidentSummary(
         incidentId=incident.incident_id,
         incidentType=incident.incident_type,
-        x=incident.x,
-        y=incident.y,
-        status=derive_incident_status(victim, has_active_assignment),
-        priority=compute_priority(victim, rules),
+        x=x,
+        y=y,
+        status=derive_incident_status(victims, has_active_assignment),
+        priority=compute_incident_priority(victims, rules),
     )

@@ -16,11 +16,13 @@ from drsim.simulation.entities.incident_models import (
     Victim,
 )
 from drsim.simulation.entities.incident_rules import (
+    compute_incident_priority,
     compute_priority,
     derive_incident_status,
     health_state,
     initial_health,
     priority_sort_key,
+    severity_from_priority,
     to_incident_summary,
     to_victim_summary,
 )
@@ -178,28 +180,61 @@ def test_priority_tie_break_is_stable():
     assert ordered == [(5, 9, "y"), (3, 2, "z"), (3, 5, "a"), (3, 5, "b")]
 
 
+def test_severity_from_priority_mapping():
+    assert severity_from_priority(5) == Severity.CRITICAL
+    assert severity_from_priority(4) == Severity.SERIOUS
+    assert severity_from_priority(3) == Severity.SERIOUS
+    assert severity_from_priority(2) == Severity.MINOR
+    assert severity_from_priority(1) == Severity.MINOR
+
+
 def test_derived_incident_status():
     v = make_victim()
-    assert derive_incident_status(v, False) == IncidentStatus.OPEN
-    assert derive_incident_status(v, True) == IncidentStatus.IN_PROGRESS
+    assert derive_incident_status([v], False) == IncidentStatus.OPEN
+    assert derive_incident_status([v], True) == IncidentStatus.IN_PROGRESS
     in_transit = make_victim(status=VictimStatus.IN_TRANSIT)
-    assert derive_incident_status(in_transit, False) == IncidentStatus.IN_PROGRESS
+    assert derive_incident_status([in_transit], False) == IncidentStatus.IN_PROGRESS
     delivered = make_victim(status=VictimStatus.AT_HOSPITAL)
-    assert derive_incident_status(delivered, True) == IncidentStatus.RESOLVED
+    assert derive_incident_status([delivered], True) == IncidentStatus.RESOLVED
     dead = make_victim(status=VictimStatus.DEAD)
-    assert derive_incident_status(dead, True) == IncidentStatus.FAILED
+    assert derive_incident_status([dead], True) == IncidentStatus.FAILED
+
+
+def test_incident_with_multiple_victims_derives_status_and_priority():
+    a = make_victim(Severity.MINOR, victim_id="a")
+    b = make_victim(Severity.CRITICAL, victim_id="b", health=10)
+    assert derive_incident_status([a, b], False) == IncidentStatus.OPEN
+    assert compute_incident_priority([a, b], RULES) == 5
+
+    delivered = make_victim(victim_id="a", status=VictimStatus.AT_HOSPITAL)
+    assert derive_incident_status([delivered, b], False) == IncidentStatus.OPEN
+
+    dead = make_victim(victim_id="b", status=VictimStatus.DEAD)
+    assert derive_incident_status([delivered, dead], False) == IncidentStatus.FAILED
+
+    delivered_b = make_victim(victim_id="b", status=VictimStatus.AT_HOSPITAL)
+    assert derive_incident_status([delivered, delivered_b], False) == IncidentStatus.RESOLVED
+    assert compute_incident_priority([delivered, delivered_b], RULES) == 0
+
+
+def test_incident_without_victims_is_rejected():
+    with pytest.raises(ValueError):
+        Incident("i1", IncidentType.BUILDING_COLLAPSE, "n1", 0, ())
+    with pytest.raises(ValueError):
+        derive_incident_status([], False)
 
 
 # ---------- contract mapping ----------
 
 
 def test_summaries_validate_against_shared_contracts():
-    incident = Incident("i1", IncidentType.BUILDING_COLLAPSE, "n1", 10.0, 12.0, 0, "v1")
+    incident = Incident("i1", IncidentType.BUILDING_COLLAPSE, "n1", 0, ("v1",))
     v = make_victim()
     vs = to_victim_summary(v, RULES)
-    inc = to_incident_summary(incident, v, False, RULES)
+    inc = to_incident_summary(incident, [v], 10.0, 12.0, False, RULES)
     assert vs.status == VictimStatus.TRAPPED and vs.healthState == VictimHealth.STABLE
     assert inc.status == IncidentStatus.OPEN and inc.priority == compute_priority(v, RULES)
+    assert (inc.x, inc.y) == (10.0, 12.0)
 
 
 # ---------- determinism ----------

@@ -51,6 +51,9 @@ class IncidentRules:
     rescue_duration_ticks: int = 6
 
 
+DEFAULT_RULES = IncidentRules()
+
+
 @dataclass(frozen=True)
 class Incident:
     """One incident has exactly one victim in the MVP. No stored status (derived)."""
@@ -58,10 +61,13 @@ class Incident:
     incident_id: str
     incident_type: IncidentType
     node_id: str  # routing uses the road node; x/y are display-only
-    x: float
-    y: float
+    # removed x,y, node_id has x,y coordinates
     created_tick: int
-    victim_id: str
+    victim_ids: tuple[str, ...]  # to not break one-to-many relationship
+
+    def __post_init__(self) -> None:
+        if not self.victim_ids:
+            raise ValueError(f"Incident {self.incident_id} must reference at least one victim")
 
 
 @dataclass(frozen=True)
