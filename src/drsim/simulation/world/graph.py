@@ -11,8 +11,8 @@ Rules implemented here (see Module Contracts §5.3, D13, D14):
 * Travel time is an integer number of ticks: ``ceil(seconds / tickDurationSeconds)``,
   with a minimum of 1 tick for any traversable edge.
 * A BLOCKED edge is never part of a route.
-* A DEGRADED edge takes ``DEGRADED_TRAVEL_MULTIPLIER`` times as long (provisional value,
-  pending team confirmation).
+* A DEGRADED edge takes ``DEGRADED_TRAVEL_MULTIPLIER`` (2) times as long
+  (docs/adr/0002-degraded-road-travel-multiplier.md).
 * Ties are broken deterministically: fewest total ticks first, then the
   lexicographically smallest node-ID sequence, then the smallest edge-ID sequence.
 
@@ -28,7 +28,7 @@ from dataclasses import dataclass
 from drsim.shared.enums import EdgeState
 from drsim.shared.schemas import MapDefinition, MapEdge
 
-# PROVISIONAL (team confirmation required): a degraded road takes twice as long.
+# A degraded road takes twice as long. See docs/adr/0002-degraded-road-travel-multiplier.md.
 DEGRADED_TRAVEL_MULTIPLIER = 2
 
 # Guards against float noise turning an exact multiple (e.g. 20.000000000004 s) into an
