@@ -108,3 +108,18 @@ When changing a shared contract:
 3. Update the example JSON files.
 4. Update this document.
 5. Mention the change in the pull request so dependent modules can adapt.
+
+### Unit entities
+
+Scenario units may set `capabilities` and `availableFromTick` (default 0).
+Omitted capabilities default to rescue for rescue units, transport for ambulances,
+and an empty list for fire units. An explicit empty list grants no task capability.
+Dispatch can call `unit.is_available(tick, capability)` to check current status,
+assignment, movement, availability tick and the requested capability.
+
+The engine stores the value returned by a unit transition. During edge traversal
+`node_id` is the last reached road node. Movement records the edge ID, destination
+node, elapsed ticks and total traversal ticks. Edge entry uses live passability
+and the scenario travel-time multiplier. Arrival commits the destination node and
+clears traversal. Recovery to available clears the assignment and traversal at
+the last reached node.

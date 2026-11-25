@@ -15,6 +15,7 @@ from drsim.shared.enums import (
     IncidentType,
     RecommendationStatus,
     RunStatus,
+    UnitCapability,
     UnitStatus,
     UnitType,
     VictimHealth,
@@ -39,6 +40,8 @@ class UnitSpec(ContractModel):
     unitId: NonEmptyId
     unitType: UnitType
     nodeId: NonEmptyId
+    capabilities: tuple[UnitCapability, ...] | None = None
+    availableFromTick: NonNegativeInt = 0
 
 
 class IncidentSpec(ContractModel):

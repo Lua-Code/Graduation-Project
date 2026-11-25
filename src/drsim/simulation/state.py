@@ -43,7 +43,13 @@ def initialize_state(
     state.facilities = {f.facilityId: f for f in map_def.facilities}
 
     for u in scenario.units:
-        state.units[u.unitId] = UnitState(id=u.unitId, type=u.unitType, node_id=u.nodeId)
+        state.units[u.unitId] = UnitState(
+            id=u.unitId,
+            type=u.unitType,
+            node_id=u.nodeId,
+            capabilities=u.capabilities,
+            available_from_tick=u.availableFromTick,
+        )
 
     for spec in sorted(scenario.incidents, key=lambda i: i.incidentId):
         severity = severity_from_priority(spec.priority)

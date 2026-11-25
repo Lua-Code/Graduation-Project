@@ -41,6 +41,11 @@ class UnitType(StrEnum):
     RESCUE = "rescue"
 
 
+class UnitCapability(StrEnum):
+    RESCUE = "rescue"
+    TRANSPORT = "transport"
+
+
 class UnitStatus(StrEnum):
     AVAILABLE = "available"
     EN_ROUTE = "en_route"
