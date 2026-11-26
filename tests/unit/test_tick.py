@@ -32,7 +32,7 @@ def test_phases_run_in_documented_order(monkeypatch):
             "update_victim_health",
             "check_end_condition",
         ]
-    ) #
+    ) 
 
 
 def test_same_input_same_progression():
