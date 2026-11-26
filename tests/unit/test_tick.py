@@ -23,10 +23,13 @@ def test_phases_run_in_documented_order(monkeypatch):
         calls
         == names
         == [
-            "apply_commands",
-            "update_world",
-            "update_units",
-            "update_victims",
+            "load_scheduled_events",
+            "apply_operator_commands",
+            "apply_automated_commands",
+            "apply_hazards",
+            "update_movement",
+            "update_workflows",
+            "update_victim_health",
             "check_end_condition",
         ]
     )

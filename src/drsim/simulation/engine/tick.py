@@ -13,14 +13,14 @@ def check_end_condition(state: SimulationState) -> None: ...
 
 # Fixed phase order
 PHASES = (
-    load_scheduled_events,    # 1-2
+    load_scheduled_events,  # 1-2
     apply_operator_commands,  # 3
-    apply_automated_commands, # 4
-    apply_hazards,            # 5
-    update_movement,          # 6
-    update_workflows,         # 7
-    update_victim_health,     # 8
-    check_end_condition,      # 9
+    apply_automated_commands,  # 4
+    apply_hazards,  # 5
+    update_movement,  # 6
+    update_workflows,  # 7
+    update_victim_health,  # 8
+    check_end_condition,  # 9
 )
 
 
