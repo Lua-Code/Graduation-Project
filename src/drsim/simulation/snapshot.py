@@ -1,4 +1,4 @@
-from drsim.shared.schemas import SimulationSnapshot, UnitSummary
+from drsim.shared.schemas import EdgeSummary, SimulationSnapshot, UnitSummary
 from drsim.simulation.entities.incident_models import DEFAULT_RULES
 from drsim.simulation.entities.incident_rules import to_incident_summary, to_victim_summary
 from drsim.simulation.state import SimulationState
@@ -35,5 +35,12 @@ def build_snapshot(state: SimulationState) -> SimulationSnapshot:
         ),
         victims=tuple(
             to_victim_summary(state.victims[k], DEFAULT_RULES) for k in sorted(state.victims)
+        ),
+        edges=tuple(
+            EdgeSummary(
+                edgeId=edge.edgeId,
+                state=state.edge_states.get(edge.edgeId, edge.state),
+            )
+            for edge in sorted(state.map_def.edges, key=lambda edge: edge.edgeId)
         ),
     )

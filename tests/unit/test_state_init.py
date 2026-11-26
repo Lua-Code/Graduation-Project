@@ -48,9 +48,7 @@ def _load(tmp_path, mutate):
 
 
 def test_incident_can_reference_multiple_victims(tmp_path):
-    scenario, map_def = _load(
-        tmp_path, lambda d: d["incidents"][0].update(victimCount=3)
-    )
+    scenario, map_def = _load(tmp_path, lambda d: d["incidents"][0].update(victimCount=3))
     s = initialize_state("run-1", scenario, map_def)
     assert s.incidents["inc-001"].victim_ids == (
         "inc-001-v001",
