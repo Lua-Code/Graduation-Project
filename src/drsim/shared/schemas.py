@@ -210,6 +210,11 @@ class VictimSummary(ContractModel):
     health: float = Field(ge=0.0, le=100.0)
 
 
+class EdgeSummary(ContractModel):
+    edgeId: NonEmptyId
+    state: EdgeState
+
+
 class SimulationEventSummary(ContractModel):
     eventId: NonEmptyId
     tick: NonNegativeInt
@@ -227,6 +232,7 @@ class SimulationSnapshot(ContractModel):
     units: tuple[UnitSummary, ...] = ()
     incidents: tuple[IncidentSummary, ...] = ()
     victims: tuple[VictimSummary, ...] = ()
+    edges: tuple[EdgeSummary, ...] = Field(default_factory=tuple)
     recentEvents: tuple[SimulationEventSummary, ...] = ()
     pendingRecommendations: tuple[Recommendation, ...] = ()
 
