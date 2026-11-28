@@ -25,6 +25,11 @@ PHASES = (
 
 
 def step(state: SimulationState) -> None:
+    """Process the current tick, then advance.
+
+    Phases run against `state.tick` (the first call processes tick 0);
+    the counter increments at the end. Simulated time = tick * 10 s.
+    """
     for phase in PHASES:
         phase(state)
     state.tick += 1  # simulated time = tick * tickDurationSeconds (10 s)
