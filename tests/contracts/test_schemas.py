@@ -9,9 +9,11 @@ from drsim.shared.enums import (
     CommandStatus,
     CommandType,
     ErrorCode,
+    EventType,
     RecommendationStatus,
 )
 from drsim.shared.schemas import (
+    DEFAULT_RULE_VERSION,
     CommandResult,
     MapDefinition,
     Recommendation,
@@ -216,6 +218,69 @@ def test_scenario_invalid(override):
         ScenarioConfig(**_scenario(**override))
 
 
+# ---------- scenario: ruleVersion and scheduledEvents ----------
+
+
+def _event(tick=0, key="000000-e3", **overrides):
+    data = {
+        "tick": tick,
+        "orderKey": key,
+        "edgeId": "e3",
+        "newState": "degraded",
+        "cause": "initial_damage",
+    }
+    data.update(overrides)
+    return data
+
+
+def test_scenario_rule_version_and_schedule_defaults():
+    s = ScenarioConfig(**_scenario())
+    assert s.ruleVersion == DEFAULT_RULE_VERSION
+    assert s.scheduledEvents == ()
+    assert s.schemaVersion == "1.0"
+
+
+def test_scenario_schedule_roundtrip():
+    events = [
+        _event(0, "000000-e3"),
+        _event(0, "000000-e4", edgeId="e4", newState="blocked"),
+        _event(30, "000030-e3", newState="blocked", cause="secondary_collapse"),
+    ]
+    s = ScenarioConfig(**_scenario(scheduledEvents=events, ruleVersion="mvp-2.0"))
+    assert s.ruleVersion == "mvp-2.0"
+    assert s.scheduledEvents[0].eventType is EventType.EDGE_STATE_CHANGED
+    assert roundtrip(s) == s
+
+
+def test_scenario_event_at_max_tick_allowed():
+    s = ScenarioConfig(**_scenario(maxTicks=50, scheduledEvents=[_event(50, "000050-e3")]))
+    assert s.scheduledEvents[0].tick == 50
+
+
+@pytest.mark.parametrize(
+    "override,message",
+    [
+        ({"ruleVersion": ""}, "at least 1 character"),
+        ({"scheduledEvents": [_event(tick=3601)]}, "exceeds maxTicks"),
+        ({"scheduledEvents": [_event(tick=-1)]}, "greater than or equal to 0"),
+        ({"scheduledEvents": [_event(0, "k"), _event(1, "k")]}, "orderKey must be unique"),
+        ({"scheduledEvents": [_event(5, "a"), _event(0, "b")]}, "sorted by"),
+        ({"scheduledEvents": [_event(0, "b"), _event(0, "a")]}, "sorted by"),
+        (
+            {"scheduledEvents": [_event(eventType=EventType.UNIT_MOVED)]},
+            "Only EDGE_STATE_CHANGED",
+        ),
+        ({"scheduledEvents": [_event(cause="")]}, "at least 1 character"),
+        ({"scheduledEvents": [_event(edgeId="")]}, "at least 1 character"),
+        ({"scheduledEvents": [_event(newState="closed")]}, "Input should be"),
+        ({"scheduledEvents": [_event(foo=1)]}, "Extra inputs are not permitted"),
+    ],
+)
+def test_scenario_schedule_invalid(override, message):
+    with pytest.raises(ValidationError, match=message):
+        ScenarioConfig(**_scenario(**override))
+
+
 # ---------- map ----------
 
 
@@ -322,6 +387,12 @@ def test_example_files_load_together():
     )
     assert scenario.mapId == map_def.mapId
     assert any(f.facilityType.value == "hospital" for f in map_def.facilities)
+
+
+def test_example_scenario_has_default_rule_version_and_no_events():
+    scenario, _ = load_scenario_with_map(SCENARIOS / "earthquake_small.json", SCENARIOS / "maps")
+    assert scenario.ruleVersion == DEFAULT_RULE_VERSION
+    assert scenario.scheduledEvents == ()
 
 
 def test_loader_rejects_bad_json(tmp_path):
