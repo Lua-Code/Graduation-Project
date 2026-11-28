@@ -60,6 +60,7 @@ class EarthquakeConfig(ContractModel):
 DEFAULT_DEGRADED_TRAVEL_MULTIPLIER = 2.0
 DEFAULT_RULE_VERSION = "mvp-1.0"
 
+
 class ScheduledEvent(ContractModel):
     tick: NonNegativeInt
     orderKey: NonEmptyId
@@ -67,7 +68,7 @@ class ScheduledEvent(ContractModel):
     edgeId: NonEmptyId
     newState: EdgeState
     cause: NonEmptyId
-    
+
     @model_validator(mode="after")
     def validateEventType(self) -> "ScheduledEvent":
         if self.eventType is not EventType.EDGE_STATE_CHANGED:
@@ -89,22 +90,21 @@ class ScenarioConfig(ContractModel):
     earthquake: EarthquakeConfig
     units: tuple[UnitSpec, ...] = Field(min_length=1)
     incidents: tuple[IncidentSpec, ...] = Field(min_length=1)
-    scheduledEvents: tuple[ScheduledEvent,...] = ()
-    
+    scheduledEvents: tuple[ScheduledEvent, ...] = ()
+
     @model_validator(mode="after")
     def validateScheduledEvents(self) -> "ScenarioConfig":
         events = self.scheduledEvents
-        _requireUnique([event.orderKey for event in events],"orderKey")
+        _requireUnique([event.orderKey for event in events], "orderKey")
         for event in events:
             if event.tick > self.maxTicks:
                 raise ValueError(
                     f"Scheduled event {event.orderKey} tick {event.tick} "
                     f"exceeds maxTicks {self.maxTicks}"
                 )
-        if list(events) != sorted(events,key=lambda event: (event.tick,event.orderKey)):
+        if list(events) != sorted(events, key=lambda event: (event.tick, event.orderKey)):
             raise ValueError("Scheduled events must be sorted by (tick,orderKey)")
-        return self    
-                
+        return self
 
 
 # ---------- command payloads ----------
@@ -214,6 +214,7 @@ class Recommendation(ContractModel):
 
 
 # ---------- snapshot ----------
+
 
 class UnitSummary(ContractModel):
     unitId: NonEmptyId
